@@ -7,6 +7,7 @@ import { initSideband } from "./sideband";
 import { calculateResult } from "./result";
 
 const app = express();
+const activeEvaluations = new Set<string>();
 app.use(express.json());
 app.use(cors());
 app.use(express.text({ type: ["application/sdp", "text/plain"] }));
@@ -123,20 +124,29 @@ app.get("/api/v1/result/:interviewId", async (req, res) => {
     status: interview.status
   })
 
-  // TODO: Should add some sort of a lock here.
-  if (interview.status != "Done") {
-    const result = await calculateResult(interview.conversations)
+  const interviewId = req.params.interviewId;
+  if (interview.status !== "Done" && !activeEvaluations.has(interviewId)) {
+    activeEvaluations.add(interviewId);
+    (async () => {
+      try {
+        const result = await calculateResult(interview.conversations);
 
-    await prisma.interview.update({
-      where: {
-        id: req.params.interviewId
-      },
-      data: {
-        status: "Done",
-        feedback: result.feedback,
-        score: result.score
+        await prisma.interview.update({
+          where: {
+            id: interviewId
+          },
+          data: {
+            status: "Done",
+            feedback: result.feedback,
+            score: result.score
+          }
+        });
+      } catch (error) {
+        console.error(`Error calculating result for interview ${interviewId}:`, error);
+      } finally {
+        activeEvaluations.delete(interviewId);
       }
-    })
+    })();
   }
 })
 
