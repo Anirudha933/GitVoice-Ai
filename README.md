@@ -1,4 +1,4 @@
-# 🎙️ AI Interviewer
+# 🎙️ GitVoice AI
 
 An advanced, real-time, voice-driven AI technical interviewer platform. This application leverages **OpenAI's Realtime WebRTC API** for low-latency voice communications, uses a **Sideband WebSocket Connection** to inject candidate-specific GitHub metadata, implements browser-native **Web Speech Recognition** for candidate transcription, and evaluates final interviews using **Groq (Llama 3.3 70B)**.
 
