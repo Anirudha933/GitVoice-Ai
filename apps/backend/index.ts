@@ -60,9 +60,16 @@ app.post("/api/v1/session/:interviewId", async (req, res) => {
         body: fd,
       });
 
+      if (!sdpResponse.ok) {
+        const errorText = await sdpResponse.text();
+        console.error("OpenAI Realtime API error:", sdpResponse.status, errorText);
+        res.status(sdpResponse.status).send(`OpenAI API error: ${errorText}`);
+        return;
+      }
+
       const location = sdpResponse.headers.get("Location");
       const callId = location?.split("/").pop()!;
-      console.log(callId);
+      console.log("OpenAI Realtime Call ID:", callId);
       // Send back the SDP we received from the OpenAI REST API
       const sdp = await sdpResponse.text();
       res.send(sdp);
@@ -70,7 +77,7 @@ app.post("/api/v1/session/:interviewId", async (req, res) => {
       initSideband(callId, req.params.interviewId);
     } catch (error) {
       console.error("Token generation error:", error);
-      res.status(500).json({ error: "Failed to generate token" });
+      res.status(500).send("Failed to generate token");
     }
 
 });
@@ -133,4 +140,4 @@ app.get("/api/v1/result/:interviewId", async (req, res) => {
   }
 })
 
-app.listen(3001);
+app.listen(3002);
